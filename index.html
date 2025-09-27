@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Constância | Seus Hábitos, Seus Sonhos</title>
+    <meta name="description" content="Constância é o seu web app para acompanhar hábitos, visualizar progresso, construir seu mural dos sonhos e manter o foco com a técnica Pomodoro.">
+    <meta name="keywords" content="hábitos, tracker, pomodoro, produtividade, constância, desenvolvimento pessoal">
+    <meta name="author" content="Seu Nome ou Empresa">
+    
+    <meta name="theme-color" content="#c2410c">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="images/icon-192x192.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="app.js" defer></script>
+
+    <style>
+        /* Estilos foram mantidos, com pequenas melhorias para animações */
+        html, body { font-family: 'Inter', sans-serif; height: 100%; }
+        .nav-item.active { background-color: #f5f5f4; color: #c2410c; }
+        .dark .nav-item.active { background-color: #1f2937; color: #fb923c; }
+        .bottom-nav-item.active { color: #c2410c; }
+        .dark .bottom-nav-item.active { color: #fb923c; }
+        .page { display: none; }
+        .page.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        .weekday-btn { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; font-weight: 500; transition: all 0.2s ease-in-out; }
+        .weekday-btn.completed { background-color: #c2410c !important; color: white !important; border-color: #c2410c !important; }
+        .dark .weekday-btn.completed { background-color: #fb923c !important; color: #111827 !important; border-color: #fb923c !important; }
+        .calendar-day { position: relative; padding-bottom: 12px; }
+        .indicators-container { position: absolute; bottom: 4px; left: 0; right: 0; display: flex; justify-content: center; gap: 3px; height: 6px; }
+        .habit-indicator { width: 6px; height: 6px; border-radius: 50%; }
+        .loader { border: 4px solid #f3f3f3; border-top: 4px solid #c2410c; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        .dark .loader { border-color: #374151; border-top-color: #fb923c; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Animações para Modals e Toasts */
+        .modal.hidden, .toast.hidden { display: none; }
+        .modal { animation: modalFadeIn 0.2s ease-out; }
+        @keyframes modalFadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .toast { animation: toastInRight 0.5s, toastOutRight 0.5s 2.5s; }
+        @keyframes toastInRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        @keyframes toastOutRight { from { transform: translateX(0); } to { transform: translateX(100%); } }
+    </style>
+</head>
+<body class="bg-stone-100 dark:bg-gray-950 text-stone-800 dark:text-stone-200">
+
+    <div class="flex h-screen">
+        <aside class="w-64 bg-white dark:bg-gray-900 dark:border-r dark:border-gray-800 shadow-md hidden md:flex flex-col">
+            <div class="p-6 border-b dark:border-gray-800">
+                <h1 class="text-2xl font-bold text-orange-800 dark:text-orange-400">Constância</h1>
+            </div>
+            <nav class="flex-grow p-4 space-y-2" aria-label="Navegação Principal">
+                <a href="#habits" data-page="habits" class="nav-item flex items-center space-x-3 p-3 rounded-lg font-semibold hover:bg-stone-100 dark:hover:bg-gray-800 transition">
+                    <span aria-hidden="true">🎯</span><span>Hábitos</span>
+                </a>
+                <a href="#calendar" data-page="calendar" class="nav-item flex items-center space-x-3 p-3 rounded-lg font-semibold hover:bg-stone-100 dark:hover:bg-gray-800 transition">
+                    <span aria-hidden="true">📊</span><span>Calendário</span>
+                </a>
+                <a href="#dreams" data-page="dreams" class="nav-item flex items-center space-x-3 p-3 rounded-lg font-semibold hover:bg-stone-100 dark:hover:bg-gray-800 transition">
+                    <span aria-hidden="true">🖼️</span><span>Mural dos Sonhos</span>
+                </a>
+                <a href="#pomodoro" data-page="pomodoro" class="nav-item flex items-center space-x-3 p-3 rounded-lg font-semibold hover:bg-stone-100 dark:hover:bg-gray-800 transition">
+                    <span aria-hidden="true">🍅</span><span>Pomodoro</span>
+                </a>
+            </nav>
+            <div class="p-4 space-y-4 border-t dark:border-gray-800">
+                <p id="daily-quote" class="text-sm text-center italic text-orange-800 dark:text-orange-400 h-10 flex items-center justify-center">"A constância é o caminho do êxito."</p>
+                <button id="theme-toggle" class="w-full flex items-center justify-center space-x-2 p-2 rounded-lg font-semibold hover:bg-stone-100 dark:hover:bg-gray-800 transition">
+                    <span id="theme-icon">🌙</span>
+                    <span>Mudar Tema</span>
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <div id="main-content" class="flex-1 overflow-y-auto p-4 md:p-8">
+                <section id="page-habits" role="tabpanel" aria-labelledby="nav-habits" class="page"></section>
+                <section id="page-calendar" role="tabpanel" aria-labelledby="nav-calendar" class="page"></section>
+                <section id="page-dreams" role="tabpanel" aria-labelledby="nav-dreams" class="page"></section>
+                <section id="page-pomodoro" role="tabpanel" aria-labelledby="nav-pomodoro" class="page"></section>
+            </div>
+
+            <nav class="md:hidden bg-white dark:bg-gray-900 border-t dark:border-gray-800" aria-label="Navegação Principal Mobile">
+                <div class="flex justify-around">
+                    <button id="nav-habits" data-page="habits" class="bottom-nav-item flex-1 flex flex-col items-center p-3">
+                        <span aria-hidden="true">🎯</span><span class="text-xs">Hábitos</span>
+                    </button>
+                    <button id="nav-calendar" data-page="calendar" class="bottom-nav-item flex-1 flex flex-col items-center p-3">
+                        <span aria-hidden="true">📊</span><span class="text-xs">Calendário</span>
+                    </button>
+                    <button id="nav-dreams" data-page="dreams" class="bottom-nav-item flex-1 flex flex-col items-center p-3">
+                        <span aria-hidden="true">🖼️</span><span class="text-xs">Sonhos</span>
+                    </button>
+                    <button id="nav-pomodoro" data-page="pomodoro" class="bottom-nav-item flex-1 flex flex-col items-center p-3">
+                        <span aria-hidden="true">🍅</span><span class="text-xs">Pomodoro</span>
+                    </button>
+                </div>
+            </nav>
+        </main>
+    </div>
+
+    <button id="fab" aria-label="Adicionar novo item" class="md:hidden absolute bottom-20 right-5 bg-orange-700 text-white w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-3xl pb-1 hover:bg-orange-800 transition">+</button>
+    
+    <div id="modal-container"></div>
+    
+    <div id="toast-container" class="fixed top-5 right-5 z-[100] space-y-2"></div>
+
+    <template id="habit-page-template">
+        <header class="flex justify-between items-center mb-6">
+            <div>
+                <h2 class="text-3xl font-bold">Seus Hábitos</h2>
+                <p class="text-stone-500 dark:text-stone-400" id="todayDate"></p>
+            </div>
+            <div class="hidden md:flex items-center space-x-2">
+                <button id="suggest-habits-btn" class="bg-white dark:bg-gray-800 border border-orange-700 dark:border-orange-500 text-orange-700 dark:text-orange-400 font-bold py-2 px-4 rounded-lg hover:bg-orange-50 dark:hover:bg-gray-700 transition">✨ Sugerir Hábitos</button>
+                <button id="add-habit-btn" class="bg-orange-700 hover:bg-orange-800 dark:bg-orange-600 dark:hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-lg shadow-md transition">+ Novo Hábito</button>
+            </div>
+        </header>
+        <div id="habits-list" class="space-y-3"></div>
+    </template>
+    
+    </body>
+</html>

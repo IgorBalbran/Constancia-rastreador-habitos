@@ -1,0 +1,27 @@
+{
+    "name": "Constância: Hábitos & Sonhos",
+    "short_name": "Constância",
+    "description": "Seu web app para acompanhar hábitos, visualizar progresso, e manter o foco.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#f5f5f4",
+    "theme_color": "#c2410c",
+    "orientation": "portrait-primary",
+    "icons": [
+      {
+        "src": "images/icon-72x72.png",
+        "type": "image/png",
+        "sizes": "72x72"
+      },
+      {
+        "src": "images/icon-192x192.png",
+        "type": "image/png",
+        "sizes": "192x192"
+      },
+      {
+        "src": "images/icon-512x512.png",
+        "type": "image/png",
+        "sizes": "512x512"
+      }
+    ]
+  }
