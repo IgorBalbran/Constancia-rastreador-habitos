@@ -29,6 +29,21 @@
         .weekday-btn { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; justify-content: center; align-items: center; font-weight: 500; transition: all 0.2s ease-in-out; }
         .weekday-btn.completed { background-color: #c2410c !important; color: white !important; border-color: #c2410c !important; }
         .dark .weekday-btn.completed { background-color: #fb923c !important; color: #111827 !important; border-color: #fb923c !important; }
+        
+        /* NOVO ESTILO PARA BOTÕES DESABILITADOS */
+        .weekday-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            background-color: #e5e5e5 !important;
+            color: #a3a3a3 !important;
+            border-color: #d4d4d4 !important;
+        }
+        .dark .weekday-btn:disabled {
+            background-color: #3f3f46 !important;
+            color: #71717a !important;
+            border-color: #52525b !important;
+        }
+
         .calendar-day { position: relative; padding-bottom: 12px; }
         .indicators-container { position: absolute; bottom: 4px; left: 0; right: 0; display: flex; justify-content: center; gap: 3px; height: 6px; }
         .habit-indicator { width: 6px; height: 6px; border-radius: 50%; }
