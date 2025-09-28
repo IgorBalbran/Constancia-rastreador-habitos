@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const state = {
         currentPage: 'habits',
         editingHabitId: null,
-        editingDreamId: null, // Novo para edição de sonhos
+        editingDreamId: null,
         habits: JSON.parse(localStorage.getItem('constancia_habits')) || [],
         dreams: JSON.parse(localStorage.getItem('constancia_dreams')) || [],
         pomodoro: {
@@ -29,7 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
         dreamRotator: null
     };
 
-    const WEBSITE_TITLE = "Constância: Produtividade para o Sucesso";
     const habitColors = ['#34d399', '#f59e0b', '#60a5fa', '#a78bfa', '#f472b6', '#ef4444'];
 
     // =======================================================================
@@ -56,7 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. FUNÇÕES DE UTILIDADE
     // =======================================================================
     const utils = {
-        getFormattedDate: (date) => date.toISOString().split('T')[0],
+        getFormattedDate: (date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        },
         getStartOfWeek: (date) => {
             const d = new Date(date);
             const day = d.getDay();
@@ -67,12 +71,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!completions) return 0;
             let streak = 0;
             let currentDate = new Date();
-            if (!completions[utils.getFormattedDate(currentDate)]) {
+            let dateKey = utils.getFormattedDate(currentDate);
+
+            if (!completions[dateKey]) {
                 currentDate.setDate(currentDate.getDate() - 1);
+                dateKey = utils.getFormattedDate(currentDate);
             }
-            while (completions[utils.getFormattedDate(currentDate)]) {
+
+            while (completions[dateKey]) {
                 streak++;
                 currentDate.setDate(currentDate.getDate() - 1);
+                dateKey = utils.getFormattedDate(currentDate);
             }
             return streak;
         },
@@ -99,7 +108,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderPageContent(pageId) {
             const pageContainer = DOM.pages[pageId];
             if (!pageContainer) return;
-            pageContainer.innerHTML = ''; // Limpa a página antes de renderizar
+            pageContainer.innerHTML = '';
             switch (pageId) {
                 case 'habits': this.renderHabitsPage(pageContainer); break;
                 case 'calendar': this.renderCalendarPage(pageContainer); break;
@@ -125,22 +134,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const weekDays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
             const startOfWeek = utils.getStartOfWeek(new Date());
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Normaliza a data de hoje para comparação
+
             state.habits.forEach(habit => {
                 const card = document.createElement('div');
                 card.className = 'habit-card bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between transition border-l-4';
                 card.style.borderColor = habit.color;
+
                 const currentStreak = utils.calculateStreak(habit.completions);
-                habit.streak = currentStreak;
-                habit.record = Math.max(habit.record || 0, currentStreak);
+                
                 let weekDayButtons = '';
                 for (let i = 0; i < 7; i++) {
                     const dayDate = new Date(startOfWeek);
                     dayDate.setDate(startOfWeek.getDate() + i);
+                    dayDate.setHours(0, 0, 0, 0); // Normaliza a data do botão
+
+                    const isDisabled = dayDate > today; // Verifica se é um dia no futuro
+
                     const dateStr = utils.getFormattedDate(dayDate);
                     const isCompleted = habit.completions && habit.completions[dateStr];
-                    weekDayButtons += `<button data-date="${dateStr}" class="weekday-btn ${isCompleted ? 'completed' : 'bg-stone-200 dark:bg-gray-700 text-stone-600 dark:text-stone-300'}">${weekDays[i]}</button>`;
+
+                    weekDayButtons += `<button data-date="${dateStr}" class="weekday-btn ${isCompleted ? 'completed' : 'bg-stone-200 dark:bg-gray-700 text-stone-600 dark:text-stone-300'}" ${isDisabled ? 'disabled' : ''}>${weekDays[i]}</button>`;
                 }
-                card.innerHTML = `<div class="flex-grow w-full"><p class="font-semibold">${habit.name}</p><div class="flex items-center space-x-1 sm:space-x-2 mt-2 weekday-container" data-id="${habit.id}">${weekDayButtons}</div></div><div class="flex items-center space-x-3 mt-3 sm:mt-0 w-full sm:w-auto justify-end"><div class="text-right"><p class="text-sm text-stone-500 dark:text-stone-400">Ofensiva: <span class="font-bold">${habit.streak} dias 🔥</span></p><p class="text-xs text-stone-400 dark:text-stone-500">Recorde: ${habit.record} 🏆</p></div><button data-id="${habit.id}" class="edit-btn text-stone-500 hover:text-orange-600 dark:hover:text-orange-400 p-2" aria-label="Editar Hábito">✏️</button><button data-id="${habit.id}" class="delete-btn text-stone-500 hover:text-red-600 dark:hover:text-red-400 p-2" aria-label="Deletar Hábito">🗑️</button></div>`;
+
+                card.innerHTML = `<div class="flex-grow w-full"><p class="font-semibold">${habit.name}</p><div class="flex items-center space-x-1 sm:space-x-2 mt-2 weekday-container" data-id="${habit.id}">${weekDayButtons}</div></div><div class="flex items-center space-x-3 mt-3 sm:mt-0 w-full sm:w-auto justify-end"><div class="text-right"><p class="text-sm text-stone-500 dark:text-stone-400">Ofensiva: <span class="font-bold">${currentStreak} dias 🔥</span></p><p class="text-xs text-stone-400 dark:text-stone-500">Recorde: ${habit.record || 0} 🏆</p></div><button data-id="${habit.id}" class="edit-btn text-stone-500 hover:text-orange-600 dark:hover:text-orange-400 p-2" aria-label="Editar Hábito">✏️</button><button data-id="${habit.id}" class="delete-btn text-stone-500 hover:text-red-600 dark:hover:text-red-400 p-2" aria-label="Deletar Hábito">🗑️</button></div>`;
                 listContainer.appendChild(card);
             });
         },
@@ -227,7 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (habit.completions) {
                     for (const dateStr in habit.completions) {
                         if (habit.completions[dateStr]) {
-                            const date = new Date(dateStr + 'T00:00:00');
+                            const date = new Date(dateStr + "T00:00:00"); 
                             if (date.getFullYear() === year) {
                                 yearCount++;
                                 if (date.getMonth() === month) monthCount++;
@@ -290,7 +308,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const minutes = String(Math.floor(timeRemaining / 60)).padStart(2, '0');
             const seconds = String(timeRemaining % 60).padStart(2, '0');
             timeEl.textContent = `${minutes}:${seconds}`;
-            document.title = `${minutes}:${seconds} - ${state.pomodoro.mode === 'focus' ? 'Foco' : 'Descanso'}`;
             
             const modeDisplay = document.getElementById('pomodoro-mode-display');
             modeDisplay.textContent = state.pomodoro.mode === 'focus' ? 'Foco' : 'Descanso';
@@ -425,7 +442,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const input = document.getElementById("modal-input");
                 const name = input.value.trim();
                 if (name) {
-                    state.habits.push({ id: Date.now(), name: name, completions: {}, record: 0, streak: 0, color: habitColors[state.habits.length % habitColors.length] });
+                    state.habits.push({ id: Date.now(), name: name, completions: {}, record: 0, color: habitColors[state.habits.length % habitColors.length] });
                     utils.saveData();
                     UI.renderHabitsList();
                     UI.showToast("Hábito adicionado!");
@@ -441,6 +458,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (habit) {
                 if (!habit.completions) habit.completions = {};
                 habit.completions[date] = !habit.completions[date];
+
+                const currentStreak = utils.calculateStreak(habit.completions);
+                habit.record = Math.max(habit.record || 0, currentStreak);
+
                 utils.saveData();
                 UI.renderHabitsList();
             }
@@ -601,7 +622,6 @@ document.addEventListener('DOMContentLoaded', () => {
             state.pomodoro.isRunning = false;
             clearInterval(state.pomodoro.timer);
             UI.updatePomodoroDisplay();
-            document.title = WEBSITE_TITLE;
         },
         onResetPomodoro() {
             this.onPausePomodoro();
